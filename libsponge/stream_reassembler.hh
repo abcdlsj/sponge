@@ -3,17 +3,30 @@
 
 #include "byte_stream.hh"
 
+#include <cstddef>
 #include <cstdint>
+#include <set>
 #include <string>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
 class StreamReassembler {
+    struct Segment {
+        size_t _index;
+        std::string _data;
+        Segment(int index, std::string data) : _index(index), _data(data) {}
+        bool operator<(const Segment &s) const { return this->_index < s._index; }
+    };
+
   private:
     // Your code here -- add private members as necessary.
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
+    std::set<Segment> _waiting_buffer;
+    size_t _unassembled_bytes_size;
+    bool _flag_eof;
+    size_t _pos_eof;
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
@@ -30,6 +43,7 @@ class StreamReassembler {
     //! \param index indicates the index (place in sequence) of the first byte in `data`
     //! \param eof the last byte of `data` will be the last byte in the entire stream
     void push_substring(const std::string &data, const uint64_t index, const bool eof);
+    void insert_buffer(const Segment &s);
 
     //! \name Access the reassembled byte stream
     //!@{
